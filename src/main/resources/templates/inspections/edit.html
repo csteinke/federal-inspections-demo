@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{inspection.edit.title}">Edit inspection</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main>
+  <p class="crumb">
+    <a th:href="@{/facilities}" th:text="#{nav.facilities}">Facilities</a>
+    /
+    <a th:href="@{|/facilities/${inspection.facility.id}|}" th:text="${inspection.facility.name}">Facility</a>
+    /
+    <a th:href="@{|/inspections/${inspection.id}|}" th:text="#{inspection.date}">Date</a>
+  </p>
+  <h1 th:text="#{inspection.edit.title}">Edit inspection</h1>
+  <form th:object="${form}" th:action="@{|/inspections/${inspection.id}/edit|}" method="post">
+    <label for="inspectionDate" th:text="#{inspection.date}">Date</label>
+    <input id="inspectionDate" type="date" th:field="*{inspectionDate}" th:errorclass="field-error">
+    <p class="error" th:if="${#fields.hasErrors('inspectionDate')}" th:errors="*{inspectionDate}">Enter the inspection date.</p>
+
+    <label for="inspectorId" th:text="#{inspection.inspector}">Inspector</label>
+    <select id="inspectorId" th:field="*{inspectorId}">
+      <option th:each="person : ${inspectors}" th:value="${person.id}" th:text="${person.name}">Avery Quinn</option>
+    </select>
+    <p class="error" th:if="${#fields.hasErrors('inspectorId')}" th:errors="*{inspectorId}">Choose an inspector.</p>
+
+    <label for="findings" th:text="#{inspection.findings}">Findings</label>
+    <textarea id="findings" th:field="*{findings}" rows="5"></textarea>
+    <p class="error" th:if="${#fields.hasErrors('findings')}" th:errors="*{findings}">Findings must be 2000 characters or less.</p>
+
+    <fieldset>
+      <legend th:text="#{inspection.checks}">Required safety checks</legend>
+      <div class="check" th:each="check, stat : *{checks}">
+        <input type="hidden" th:field="*{checks[__${stat.index}__].id}">
+        <input type="hidden" th:field="*{checks[__${stat.index}__].name}">
+        <label>
+          <input type="checkbox" th:field="*{checks[__${stat.index}__].done}">
+          <span th:text="*{checks[__${stat.index}__].name}">Fire exits</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <button type="submit" th:text="#{inspection.save}">Save</button>
+    <a th:href="@{|/inspections/${inspection.id}|}" th:text="#{inspection.cancel}">Cancel</a>
+  </form>
+</main>
+</body>
+</html>

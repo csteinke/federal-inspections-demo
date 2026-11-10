@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{facility.list.title}">Facilities</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main>
+  <h1 th:text="#{facility.list.title}">Facilities</h1>
+  <p th:if="${facilities.isEmpty()}" th:text="#{facility.list.empty}">No facilities are on file.</p>
+  <table th:if="${!facilities.isEmpty()}">
+    <thead>
+    <tr>
+      <th th:text="#{facility.column.name}">Name</th>
+      <th th:text="#{facility.column.address}">Address</th>
+      <th th:text="#{facility.column.region}">Agency region</th>
+      <th th:text="#{facility.column.action}">Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="facility : ${facilities}">
+      <td th:text="${facility.name}">North Ridge Records Annex</td>
+      <td th:text="${facility.address}">100 Civic Plaza</td>
+      <td th:text="${facility.region}">Region 4</td>
+      <td><a th:href="@{|/facilities/${facility.id}|}" th:text="#{inspection.view}">View</a></td>
+    </tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

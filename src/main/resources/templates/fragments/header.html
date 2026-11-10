@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="header">
+  <div class="wrap">
+    <a th:href="@{/facilities}" th:text="#{app.title}">Facility Inspection Tracker (demo, sample data)</a>
+    <p class="banner" th:text="#{app.banner}">Sample data only. This is not a real agency system.</p>
+  </div>
+</header>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{inspection.date}">Inspection</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main>
+  <p class="crumb">
+    <a th:href="@{/facilities}" th:text="#{nav.facilities}">Facilities</a>
+    /
+    <a th:href="@{|/facilities/${inspection.facility.id}|}" th:text="${inspection.facility.name}">Facility</a>
+  </p>
+  <p class="notice" th:if="${saved}" th:text="#{inspection.saved}">Inspection saved.</p>
+  <h1 th:text="${#temporals.format(inspection.inspectionDate, 'MMMM d, yyyy')}">September 2, 2026</h1>
+  <p class="meta"><strong th:text="#{facility.column.name}">Name</strong> <span th:text="${inspection.facility.name}">Facility</span></p>
+  <p class="meta"><strong th:text="#{inspection.inspector}">Inspector</strong> <span th:text="${inspection.inspector.name}">Avery Quinn</span></p>
+  <h2 th:text="#{inspection.findings}">Findings</h2>
+  <p class="findings" th:if="${!#strings.isEmpty(inspection.findings)}" th:text="${inspection.findings}">Findings</p>
+  <p th:if="${#strings.isEmpty(inspection.findings)}" th:text="#{inspection.findings.empty}">No findings recorded.</p>
+
+  <h2 th:text="#{inspection.checks}">Required safety checks</h2>
+  <table>
+    <thead>
+    <tr>
+      <th th:text="#{facility.column.name}">Name</th>
+      <th th:text="#{inspection.column.result}">Result</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="check : ${inspection.safetyChecks}">
+      <td th:text="${check.name}">Fire exits</td>
+      <td>
+        <span th:if="${check.done}" class="done" th:text="#{inspection.check.done}">Done</span>
+        <span th:unless="${check.done}" class="not-done" th:text="#{inspection.check.notDone}">Not done</span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <p><a class="button" th:href="@{|/inspections/${inspection.id}/edit|}" th:text="#{inspection.edit}">Edit inspection</a></p>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${facility.name}">Facility</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main>
+  <p class="crumb">
+    <a th:href="@{/facilities}" th:text="#{nav.facilities}">Facilities</a>
+  </p>
+  <h1 th:text="${facility.name}">North Ridge Records Annex</h1>
+  <p class="meta"><strong th:text="#{facility.column.address}">Address</strong> <span th:text="${facility.address}">100 Civic Plaza</span></p>
+  <p class="meta"><strong th:text="#{facility.column.region}">Agency region</strong> <span th:text="${facility.region}">Region 4</span></p>
+
+  <h2 th:text="#{facility.detail.inspections}">Inspections</h2>
+  <p th:if="${inspections.isEmpty()}" th:text="#{facility.detail.none}">This facility has no inspections.</p>
+  <table th:if="${!inspections.isEmpty()}">
+    <thead>
+    <tr>
+      <th th:text="#{inspection.column.date}">Date</th>
+      <th th:text="#{inspection.column.inspector}">Inspector</th>
+      <th th:text="#{inspection.column.findings}">Findings</th>
+      <th th:text="#{inspection.column.action}">Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${inspections}">
+      <td th:text="${#temporals.format(item.inspectionDate, 'MMMM d, yyyy')}">September 2, 2026</td>
+      <td th:text="${item.inspector.name}">Avery Quinn</td>
+      <td>
+        <span th:if="${!#strings.isEmpty(item.findings)}" th:text="${item.findings}">Findings</span>
+        <span th:if="${#strings.isEmpty(item.findings)}" th:text="#{inspection.findings.empty}">No findings recorded.</span>
+      </td>
+      <td><a th:href="@{|/inspections/${item.id}|}" th:text="#{inspection.view}">View</a></td>
+    </tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

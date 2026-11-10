@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/block-main-push.sh",
+        "timeout": 10,
+        "failClosed": true
+      }
+    ]
+  }
+}
