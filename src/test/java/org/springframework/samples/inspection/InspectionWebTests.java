@@ -121,6 +121,7 @@ class InspectionWebTests {
 		form.add("inspectionDate", inspection.getInspectionDate().toString());
 		form.add("findings", inspection.getFindings());
 		form.add("inspectorId", inspection.getInspector().getId().toString());
+		form.add("status", inspection.getStatus().name());
 		int index = 0;
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			form.add("checks[" + index + "].id", check.getId().toString());

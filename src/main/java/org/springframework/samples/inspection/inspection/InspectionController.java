@@ -1,8 +1,13 @@
 package org.springframework.samples.inspection.inspection;
 
+import java.util.Locale;
+import java.util.Optional;
+
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
 import org.springframework.samples.inspection.model.Inspection;
+import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,9 +29,12 @@ public class InspectionController {
 
 	private final InspectorRepository inspectors;
 
-	public InspectionController(InspectionService inspections, InspectorRepository inspectors) {
+	private final MessageSource messages;
+
+	public InspectionController(InspectionService inspections, InspectorRepository inspectors, MessageSource messages) {
 		this.inspections = inspections;
 		this.inspectors = inspectors;
+		this.messages = messages;
 	}
 
 	@GetMapping("/{id}")
@@ -51,7 +59,11 @@ public class InspectionController {
 		if (result.hasErrors()) {
 			return this.editPage(inspection, form, model);
 		}
-		this.inspections.update(id, form);
+		Optional<String> error = this.inspections.update(id, form);
+		if (error.isPresent()) {
+			model.addAttribute("errorMessage", this.messages.getMessage(error.get(), null, Locale.ENGLISH));
+			return this.editPage(inspection, form, model);
+		}
 		redirect.addFlashAttribute("saved", true);
 		return "redirect:/inspections/" + id;
 	}
@@ -65,6 +77,7 @@ public class InspectionController {
 		model.addAttribute("inspection", inspection);
 		model.addAttribute("form", form);
 		model.addAttribute("inspectors", this.inspectors.findAllByOrderByNameAsc());
+		model.addAttribute("statuses", InspectionStatus.values());
 		return "inspections/edit";
 	}
 

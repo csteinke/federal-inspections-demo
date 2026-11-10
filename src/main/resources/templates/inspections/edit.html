@@ -17,6 +17,7 @@
     <a th:href="@{|/inspections/${inspection.id}|}" th:text="#{inspection.date}">Date</a>
   </p>
   <h1 th:text="#{inspection.edit.title}">Edit inspection</h1>
+  <p class="error" th:if="${errorMessage}" th:text="${errorMessage}" role="alert">You cannot mark this inspection completed.</p>
   <form th:object="${form}" th:action="@{|/inspections/${inspection.id}/edit|}" method="post">
     <label for="inspectionDate" th:text="#{inspection.date}">Date</label>
     <input id="inspectionDate" type="date" th:field="*{inspectionDate}" th:errorclass="field-error">
@@ -27,6 +28,12 @@
       <option th:each="person : ${inspectors}" th:value="${person.id}" th:text="${person.name}">Avery Quinn</option>
     </select>
     <p class="error" th:if="${#fields.hasErrors('inspectorId')}" th:errors="*{inspectorId}">Choose an inspector.</p>
+
+    <label for="status" th:text="#{inspection.status}">Status</label>
+    <select id="status" th:field="*{status}">
+      <option th:each="item : ${statuses}" th:value="${item}" th:text="#{|inspection.status.${item}|}">Scheduled</option>
+    </select>
+    <p class="error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}">Choose a status.</p>
 
     <label for="findings" th:text="#{inspection.findings}">Findings</label>
     <textarea id="findings" th:field="*{findings}" rows="5"></textarea>

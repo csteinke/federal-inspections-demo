@@ -37,25 +37,34 @@ public class InspectionService {
 	}
 
 	@Transactional
-	public void update(Integer id, InspectionForm form) {
+	public Optional<String> update(Integer id, InspectionForm form) {
 		Inspection inspection = this.inspections.findById(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+		boolean allChecksDone = InspectionRules.allChecksDone(inspection.getSafetyChecks(), form.getChecks());
+		String error = InspectionRules.completionError(inspection.getStatus(), form.getStatus(), allChecksDone);
+		if (error != null) {
+			return Optional.of(error);
+		}
 		Inspector inspector = this.inspectors.findById(form.getInspectorId())
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown inspector"));
 		inspection.setInspectionDate(form.getInspectionDate());
 		String findings = (form.getFindings() == null) ? "" : form.getFindings().trim();
 		inspection.setFindings(findings);
 		inspection.setInspector(inspector);
+		inspection.setStatus(form.getStatus());
 		Map<Integer, SafetyCheck> byId = new HashMap<>();
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			byId.put(check.getId(), check);
 		}
-		for (InspectionForm.CheckLine line : form.getChecks()) {
-			SafetyCheck check = byId.get(line.getId());
-			if (check != null) {
-				check.setDone(line.isDone());
+		if (form.getChecks() != null) {
+			for (InspectionForm.CheckLine line : form.getChecks()) {
+				SafetyCheck check = byId.get(line.getId());
+				if (check != null) {
+					check.setDone(line.isDone());
+				}
 			}
 		}
+		return Optional.empty();
 	}
 
 }
