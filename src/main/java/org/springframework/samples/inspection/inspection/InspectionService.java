@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
 import org.springframework.samples.inspection.model.Inspection;
-import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.samples.inspection.model.Inspector;
 import org.springframework.samples.inspection.model.SafetyCheck;
 import org.springframework.stereotype.Service;
@@ -57,16 +56,6 @@ public class InspectionService {
 				check.setDone(line.isDone());
 			}
 		}
-		InspectionStatus next = form.getStatus();
-		if (next == InspectionStatus.COMPLETED) {
-			if (inspection.getStatus() == InspectionStatus.CANCELLED) {
-				throw new InspectionRuleException("validation.status.cancelled");
-			}
-			if (!inspection.allChecksDone()) {
-				throw new InspectionRuleException("validation.status.checks");
-			}
-		}
-		inspection.setStatus(next);
 	}
 
 }

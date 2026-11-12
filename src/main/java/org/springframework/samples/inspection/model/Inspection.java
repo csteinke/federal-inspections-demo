@@ -7,8 +7,6 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -33,10 +31,6 @@ public class Inspection extends BaseEntity {
 
 	@Column(name = "findings", nullable = false, length = 2000)
 	private String findings;
-
-	@Column(name = "status", nullable = false, length = 20)
-	@Enumerated(EnumType.STRING)
-	private InspectionStatus status;
 
 	@OneToMany(mappedBy = "inspection", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@OrderBy("id ASC")
@@ -72,14 +66,6 @@ public class Inspection extends BaseEntity {
 
 	public void setFindings(String findings) {
 		this.findings = findings;
-	}
-
-	public InspectionStatus getStatus() {
-		return this.status;
-	}
-
-	public void setStatus(InspectionStatus status) {
-		this.status = status;
 	}
 
 	public List<SafetyCheck> getSafetyChecks() {

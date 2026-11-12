@@ -34,9 +34,6 @@ class MessageFilesTests {
 		Properties english = files.get("messages.properties");
 		assertThat(english).isNotNull();
 		assertThat(english.getProperty("app.title")).isEqualTo("Facility Inspection Tracker (demo, sample data)");
-		assertThat(english.stringPropertyNames()).contains("inspection.column.status", "inspection.status",
-				"inspection.status.SCHEDULED", "inspection.status.COMPLETED", "inspection.status.CANCELLED",
-				"validation.status", "validation.status.checks", "validation.status.cancelled");
 
 		for (Map.Entry<String, Properties> entry : files.entrySet()) {
 			assertThat(entry.getValue().stringPropertyNames()).as(entry.getKey())

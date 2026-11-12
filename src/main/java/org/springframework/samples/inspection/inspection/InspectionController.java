@@ -3,7 +3,6 @@ package org.springframework.samples.inspection.inspection;
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
 import org.springframework.samples.inspection.model.Inspection;
-import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -52,13 +51,7 @@ public class InspectionController {
 		if (result.hasErrors()) {
 			return this.editPage(inspection, form, model);
 		}
-		try {
-			this.inspections.update(id, form);
-		}
-		catch (InspectionRuleException ex) {
-			result.rejectValue("status", ex.getMessageKey());
-			return this.editPage(inspection, form, model);
-		}
+		this.inspections.update(id, form);
 		redirect.addFlashAttribute("saved", true);
 		return "redirect:/inspections/" + id;
 	}
@@ -72,7 +65,6 @@ public class InspectionController {
 		model.addAttribute("inspection", inspection);
 		model.addAttribute("form", form);
 		model.addAttribute("inspectors", this.inspectors.findAllByOrderByNameAsc());
-		model.addAttribute("statuses", InspectionStatus.values());
 		return "inspections/edit";
 	}
 

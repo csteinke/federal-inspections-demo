@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.inspection.model.Inspection;
-import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.samples.inspection.model.SafetyCheck;
 
 import jakarta.validation.constraints.NotNull;
@@ -24,9 +23,6 @@ public class InspectionForm {
 	@NotNull(message = "{validation.inspector}")
 	private Integer inspectorId;
 
-	@NotNull(message = "{validation.status}")
-	private InspectionStatus status;
-
 	private List<CheckLine> checks = new ArrayList<>();
 
 	public static InspectionForm from(Inspection inspection) {
@@ -34,7 +30,6 @@ public class InspectionForm {
 		form.setInspectionDate(inspection.getInspectionDate());
 		form.setFindings(inspection.getFindings());
 		form.setInspectorId(inspection.getInspector().getId());
-		form.setStatus(inspection.getStatus());
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			form.getChecks().add(new CheckLine(check.getId(), check.getName(), check.isDone()));
 		}
@@ -63,14 +58,6 @@ public class InspectionForm {
 
 	public void setInspectorId(Integer inspectorId) {
 		this.inspectorId = inspectorId;
-	}
-
-	public InspectionStatus getStatus() {
-		return this.status;
-	}
-
-	public void setStatus(InspectionStatus status) {
-		this.status = status;
 	}
 
 	public List<CheckLine> getChecks() {
