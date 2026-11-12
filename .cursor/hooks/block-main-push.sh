@@ -1,8 +1,21 @@
 #!/bin/bash
-# Blocks a git push to main and any force push.
-# Bash, sed -E, and grep -E only, so it runs on macOS and Linux.
-# Cursor sends JSON on stdin, for example {"command":"git push origin main","cwd":"...","sandbox":false}
+# Block a push to main and a force push.
+# macOS and Linux run this file.
+# Windows runs the PowerShell file.
+# If this file cannot read the command, it allows the command.
+# Windows Git Bash lets the PowerShell file decide, so the message is not shown twice.
+case "$(uname -s 2>/dev/null || true)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo '{"permission":"allow"}'
+    exit 0
+    ;;
+esac
 input=$(cat)
+# Drop a UTF-8 BOM if the input has one.
+bom=$(printf '\357\273\277')
+case "$input" in
+  "$bom"*) input=${input#"$bom"} ;;
+esac
 field() { printf '%s' "$input" | sed -nE "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"(([^\"\\\\]|\\\\.)*)\".*/\\1/p"; }
 cmd=$(field command)
 cwd=$(field cwd)
