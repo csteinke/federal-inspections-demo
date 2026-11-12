@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Reset the demo to a clean main branch.
-# -y skips the question. --keep-remote keeps the GitHub branches.
+# Reset the demo to the demo-start tag.
+# -y skips the question. --keep-remote keeps the GitHub branches and GitHub main.
 
 set -u
 
@@ -39,35 +39,6 @@ fi
 if ! git --no-pager rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   printf '%s\n' "This folder is not a git repo. Open the demo folder and run the reset again." >&2
   exit 1
-fi
-
-printf '%s\n' "This resets the demo in:"
-pwd
-printf '\n'
-printf '%s\n' "It will do this work:"
-printf '%s\n' "- Stop the demo app if Java listens on port 8080."
-printf '%s\n' "- Throw away edits that you did not commit."
-printf '%s\n' "- Delete new files that git does not track."
-printf '%s\n' "- Keep ignored files, such as target/ and IDE files."
-printf '%s\n' "- Switch to the main branch and match main on GitHub."
-printf '%s\n' "- Delete local branches whose names start with feature/ins-142."
-if [ "$keep_remote" -eq 1 ]; then
-  printf '%s\n' "- Keep branches on GitHub whose names start with feature/ins-142."
-else
-  printf '%s\n' "- Delete branches on GitHub whose names start with feature/ins-142."
-  printf '%s\n' "  This also closes its open pull request on GitHub."
-fi
-printf '\n'
-
-if [ "$skip_prompt" -ne 1 ]; then
-  printf '%s' 'Type yes to reset the demo: '
-  answer=""
-  IFS= read -r answer || true
-  answer=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-  if [ "$answer" != "yes" ]; then
-    printf '%s\n' "Reset cancelled. Nothing was changed."
-    exit 0
-  fi
 fi
 
 stop_demo_app() {
@@ -119,21 +90,76 @@ run_git() {
   fi
 }
 
-stop_demo_app
+printf '%s\n' "This resets the demo in:"
+pwd
+printf '\n'
+printf '%s\n' "It will do this work:"
+printf '%s\n' "- Stop the demo app if Java listens on port 8080."
+printf '%s\n' "- Throw away edits that you did not commit."
+printf '%s\n' "- Delete new files that git does not track."
+printf '%s\n' "- Keep ignored files, such as target/ and IDE files."
+printf '%s\n' "- Switch to the main branch and match the demo-start tag."
+printf '%s\n' "- Delete local branches whose names start with feature/ins-142."
+if [ "$keep_remote" -eq 1 ]; then
+  printf '%s\n' "- Keep branches on GitHub whose names start with feature/ins-142."
+  printf '%s\n' "- Keep GitHub main as it is."
+else
+  printf '%s\n' "- Delete branches on GitHub whose names start with feature/ins-142."
+  printf '%s\n' "  This also closes its open pull request on GitHub."
+  printf '%s\n' "- If GitHub main is not the demo start, move it back to that tag."
+fi
+printf '\n'
 
 printf '%s\n' "Fetching from GitHub."
-run_git "Git could not fetch from origin. Check your network and sign-in, then run the reset again." fetch origin --prune
+run_git "Git could not fetch from origin. Check your network and sign-in, then run the reset again." fetch origin --prune --tags --force
+
+demo_start=$(git --no-pager rev-parse --verify 'demo-start^{commit}' 2>/dev/null) || demo_start=""
+if [ -z "$demo_start" ]; then
+  printf '%s\n' "Git could not find the demo-start tag. The demo was not reset." >&2
+  exit 1
+fi
+
+remote_main=""
+remote_main=$(git --no-pager rev-parse --verify 'origin/main' 2>/dev/null) || remote_main=""
+main_differs=0
+if [ "$remote_main" != "$demo_start" ]; then
+  main_differs=1
+fi
+
+if [ "$keep_remote" -eq 1 ]; then
+  if [ "$main_differs" -eq 1 ]; then
+    printf '%s\n' "GitHub main is not the demo start. This run will keep GitHub main."
+  fi
+elif [ "$main_differs" -eq 1 ]; then
+  printf '%s\n' "Warning: GitHub main is not the demo start."
+  printf '%s\n' "This reset will move GitHub main back to the demo-start tag."
+  printf '%s\n' "Merged rehearsal work on main will be removed from GitHub."
+fi
+printf '\n'
+
+if [ "$skip_prompt" -ne 1 ]; then
+  printf '%s' 'Type yes to reset the demo: '
+  answer=""
+  IFS= read -r answer || true
+  answer=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  if [ "$answer" != "yes" ]; then
+    printf '%s\n' "Reset cancelled. Nothing was changed."
+    exit 0
+  fi
+fi
+
+stop_demo_app
 
 printf '%s\n' "Switching to the main branch."
 run_git "Git could not switch to main. The demo was not reset." checkout -f main
 
-printf '%s\n' "Matching main on GitHub."
-run_git "Git could not make main match origin/main. The demo was not reset." reset --hard origin/main
+printf '%s\n' "Matching the demo-start tag."
+run_git "Git could not make main match the demo-start tag. The demo was not reset." reset --hard demo-start
 
-current=$(git --no-pager rev-parse --abbrev-ref HEAD)
-code=$?
-if [ "$code" -ne 0 ] || [ "$current" != "main" ]; then
-  printf '%s\n' "Git is not on the main branch. The demo was not fully reset." >&2
+current=$(git --no-pager rev-parse --abbrev-ref HEAD) || current=""
+head_sha=$(git --no-pager rev-parse --verify HEAD) || head_sha=""
+if [ "$current" != "main" ] || [ "$head_sha" != "$demo_start" ]; then
+  printf '%s\n' "Git is not on the demo start. The demo was not fully reset." >&2
   exit 1
 fi
 
@@ -184,7 +210,7 @@ else
   remote_list=$(git --no-pager ls-remote --heads origin 'refs/heads/feature/ins-142*')
   code=$?
   if [ "$code" -ne 0 ]; then
-    printf '%s\n' "Git could not list branches on GitHub. Your files are already back on main. Remote branches were not deleted." >&2
+    printf '%s\n' "Git could not list branches on GitHub. Your files are already on the demo start. Remote branches were not deleted." >&2
     exit 1
   fi
 
@@ -214,7 +240,7 @@ else
       still_code=$?
       if [ "$still_code" -ne 0 ] || [ -n "$still" ]; then
         printf '%s\n' "$delete_out" >&2
-        printf '%s\n' "Git could not delete remote branch $branch. Your files are already back on main. That remote branch may still be open." >&2
+        printf '%s\n' "Git could not delete remote branch $branch. Your files are already on the demo start. That remote branch may still be open." >&2
         exit 1
       fi
       printf '%s\n' "Remote branch $branch is already gone."
@@ -224,6 +250,14 @@ else
 
   if [ "$saw_remote" -eq 0 ]; then
     printf '%s\n' "No branches on GitHub start with feature/ins-142."
+  fi
+
+  if [ "$main_differs" -eq 1 ]; then
+    printf '%s\n' "Moving GitHub main back to the demo-start tag."
+    run_git "Git could not move GitHub main back to the demo start. Your files are already on the demo start. GitHub main may still have the merged work." push --force-with-lease origin "demo-start^{commit}:main"
+    printf '%s\n' "Moved GitHub main back to the demo-start tag."
+  else
+    printf '%s\n' "GitHub main is already the demo start."
   fi
 fi
 

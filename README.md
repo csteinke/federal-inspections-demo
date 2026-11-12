@@ -28,7 +28,7 @@ On Windows, run `.\mvnw.cmd spring-javaformat:apply`.
 
 ## Reset the demo
 
-Run this before you rehearse again. It puts this folder back on a clean main branch.
+Run this before you rehearse again. It puts this folder back on the `demo-start` tag. That tag is the clean app, before a rehearsal adds the ticket work.
 
 On Windows, run `.\reset-demo.cmd`.
 
@@ -43,7 +43,11 @@ It stops the demo app if Java listens on port 8080. It deletes these things:
 - Local branches whose names start with `feature/ins-142`.
 - Those same branches on GitHub. Deleting one of those branches also closes its open pull request.
 
-Other branches stay. The main branch stays, and it matches GitHub.
+If GitHub main is not the `demo-start` tag, the reset moves main back to that tag. A merged rehearsal pull request is removed from main.
+
+Other branches stay.
+
+If you change the demo setup on purpose, move the tag with `git tag -f demo-start` and `git push -f origin demo-start`.
 
 ## Demo files
 

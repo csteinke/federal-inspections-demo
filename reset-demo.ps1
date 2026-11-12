@@ -1,6 +1,6 @@
-# Reset the demo to a clean main branch.
+# Reset the demo to the demo-start tag.
 # This file runs on Windows PowerShell 5.1.
-# -Yes skips the question. -KeepRemote keeps the GitHub branches.
+# -Yes skips the question. -KeepRemote keeps the GitHub branches and GitHub main.
 
 param(
   [switch]$Yes,
@@ -21,6 +21,9 @@ try {
 
 $script:GitExit = 0
 $script:GitLines = @()
+$script:DemoStart = ''
+$script:RemoteMain = ''
+$script:MainDiffers = $false
 
 if ($args.Count -gt 0) {
   Write-Host "Unknown option: $($args -join ' ')." -ForegroundColor Red
@@ -90,6 +93,16 @@ function Test-GitLinesPresent {
     }
   }
   return $false
+}
+
+function Get-SingleGitLine {
+  $text = ''
+  foreach ($checkLine in @($script:GitLines)) {
+    if (-not [string]::IsNullOrWhiteSpace($checkLine)) {
+      $text = $checkLine.Trim()
+    }
+  }
+  return $text
 }
 
 function Stop-DemoOnPort {
@@ -172,13 +185,48 @@ Write-Host "- Stop the demo app if Java listens on port 8080."
 Write-Host "- Throw away edits that you did not commit."
 Write-Host "- Delete new files that git does not track."
 Write-Host "- Keep ignored files, such as target/ and IDE files."
-Write-Host "- Switch to the main branch and match main on GitHub."
+Write-Host "- Switch to the main branch and match the demo-start tag."
 Write-Host "- Delete local branches whose names start with feature/ins-142."
 if ($KeepRemote) {
   Write-Host "- Keep branches on GitHub whose names start with feature/ins-142."
+  Write-Host "- Keep GitHub main as it is."
 } else {
   Write-Host "- Delete branches on GitHub whose names start with feature/ins-142."
   Write-Host "  This also closes its open pull request on GitHub."
+  Write-Host "- If GitHub main is not the demo start, move it back to that tag."
+}
+Write-Host ""
+
+Write-Host "Fetching from GitHub."
+Invoke-GitOrStop -FailureMessage "Git could not fetch from origin. Check your network and sign-in, then run the reset again." -GitArguments @('fetch', 'origin', '--prune', '--tags', '--force')
+
+Invoke-Git -Quiet -GitArguments @('rev-parse', '--verify', 'demo-start^{commit}')
+if ($script:GitExit -ne 0) {
+  Write-Host "Git could not find the demo-start tag. The demo was not reset." -ForegroundColor Red
+  exit 1
+}
+$script:DemoStart = Get-SingleGitLine
+if ([string]::IsNullOrWhiteSpace($script:DemoStart)) {
+  Write-Host "Git could not find the demo-start tag. The demo was not reset." -ForegroundColor Red
+  exit 1
+}
+
+Invoke-Git -Quiet -GitArguments @('rev-parse', '--verify', 'origin/main')
+if ($script:GitExit -eq 0) {
+  $script:RemoteMain = Get-SingleGitLine
+}
+if ($script:RemoteMain -cne $script:DemoStart) {
+  $script:MainDiffers = $true
+}
+
+if ($KeepRemote) {
+  if ($script:MainDiffers) {
+    Write-Host "GitHub main is not the demo start. This run will keep GitHub main." -ForegroundColor Yellow
+  }
+} elseif ($script:MainDiffers) {
+  Write-Host "Warning: GitHub main is not the demo start." -ForegroundColor Yellow
+  Write-Host "This reset will move GitHub main back to the demo-start tag." -ForegroundColor Yellow
+  Write-Host "Merged rehearsal work on main will be removed from GitHub." -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -192,14 +240,11 @@ if (-not $Yes) {
 
 Stop-DemoOnPort
 
-Write-Host "Fetching from GitHub."
-Invoke-GitOrStop -FailureMessage "Git could not fetch from origin. Check your network and sign-in, then run the reset again." -GitArguments @('fetch', 'origin', '--prune')
-
 Write-Host "Switching to the main branch."
 Invoke-GitOrStop -FailureMessage "Git could not switch to main. The demo was not reset." -GitArguments @('checkout', '-f', 'main')
 
-Write-Host "Matching main on GitHub."
-Invoke-GitOrStop -FailureMessage "Git could not make main match origin/main. The demo was not reset." -GitArguments @('reset', '--hard', 'origin/main')
+Write-Host "Matching the demo-start tag."
+Invoke-GitOrStop -FailureMessage "Git could not make main match the demo-start tag. The demo was not reset." -GitArguments @('reset', '--hard', 'demo-start')
 
 Invoke-Git -Quiet -GitArguments @('rev-parse', '--abbrev-ref', 'HEAD')
 $onMain = $false
@@ -210,8 +255,13 @@ if ($script:GitExit -eq 0) {
     }
   }
 }
-if (-not $onMain) {
-  Write-Host "Git is not on the main branch. The demo was not fully reset." -ForegroundColor Red
+Invoke-Git -Quiet -GitArguments @('rev-parse', '--verify', 'HEAD')
+$head = ''
+if ($script:GitExit -eq 0) {
+  $head = Get-SingleGitLine
+}
+if ((-not $onMain) -or ($head -cne $script:DemoStart)) {
+  Write-Host "Git is not on the demo start. The demo was not fully reset." -ForegroundColor Red
   exit 1
 }
 
@@ -276,7 +326,7 @@ if ($KeepRemote) {
         Write-Host $checkLine
       }
     }
-    Write-Host "Git could not list branches on GitHub. Your files are already back on main. Remote branches were not deleted." -ForegroundColor Red
+    Write-Host "Git could not list branches on GitHub. Your files are already on the demo start. Remote branches were not deleted." -ForegroundColor Red
     exit 1
   }
 
@@ -318,7 +368,7 @@ if ($KeepRemote) {
             Write-Host $deleteLine
           }
         }
-        Write-Host "Git could not delete remote branch $branch. Your files are already back on main. That remote branch may still be open." -ForegroundColor Red
+        Write-Host "Git could not delete remote branch $branch. Your files are already on the demo start. That remote branch may still be open." -ForegroundColor Red
         exit 1
       }
       Write-Host "Remote branch $branch is already gone."
@@ -326,6 +376,14 @@ if ($KeepRemote) {
   }
   if (-not $sawRemote) {
     Write-Host "No branches on GitHub start with feature/ins-142."
+  }
+
+  if ($script:MainDiffers) {
+    Write-Host "Moving GitHub main back to the demo-start tag."
+    Invoke-GitOrStop -FailureMessage "Git could not move GitHub main back to the demo start. Your files are already on the demo start. GitHub main may still have the merged work." -GitArguments @('push', '--force-with-lease', 'origin', 'demo-start^{commit}:main')
+    Write-Host "Moved GitHub main back to the demo-start tag."
+  } else {
+    Write-Host "GitHub main is already the demo start."
   }
 }
 
