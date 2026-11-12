@@ -26,6 +26,25 @@ On macOS or Linux, run `./mvnw spring-javaformat:apply`.
 
 On Windows, run `.\mvnw.cmd spring-javaformat:apply`.
 
+## Reset the demo
+
+Run this before you rehearse again. It puts this folder back on a clean main branch.
+
+On Windows, run `.\reset-demo.cmd`.
+
+On macOS or Linux, run `./reset-demo.sh`.
+
+The command tells you what it will do. Then it asks you to type yes.
+
+It stops the demo app if Java listens on port 8080. It deletes these things:
+
+- Edits you did not commit.
+- New files that git does not track. It keeps ignored files, such as `target/` and IDE files.
+- Local branches whose names start with `feature/ins-142`.
+- Those same branches on GitHub. Deleting one of those branches also closes its open pull request.
+
+Other branches stay. The main branch stays, and it matches GitHub.
+
 ## Demo files
 
 - `AGENTS.md`
@@ -35,6 +54,9 @@ On Windows, run `.\mvnw.cmd spring-javaformat:apply`.
 - `.cursor/hooks/block-main-push.sh`
 - `.cursor/hooks/block-main-push.ps1`
 - `docs/tickets/INS-142.md`
+- `reset-demo.cmd`
+- `reset-demo.ps1`
+- `reset-demo.sh`
 
 ## Hook self-test
 

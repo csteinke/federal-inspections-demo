@@ -24,3 +24,4 @@
 - A pull request description comes from the ticket and lists the tests added.
 - Open pull requests with `gh pr create` against `main`.
 - Never push to main.
+- Never run reset-demo.cmd, reset-demo.ps1, or reset-demo.sh unless the user asks for a reset by name.
