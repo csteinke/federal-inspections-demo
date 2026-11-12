@@ -3,9 +3,14 @@
   "hooks": {
     "beforeShellExecution": [
       {
-        "command": ".cursor/hooks/block-main-push.sh",
+        "command": "bash .cursor/hooks/block-main-push.sh",
         "timeout": 10,
-        "failClosed": true
+        "failClosed": false
+      },
+      {
+        "command": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .cursor/hooks/block-main-push.ps1",
+        "timeout": 10,
+        "failClosed": false
       }
     ]
   }
