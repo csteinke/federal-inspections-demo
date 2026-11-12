@@ -2,7 +2,7 @@
 
 This app is a demo. It uses sample data only. It does not use a real agency, a real person, or a real facility.
 
-Staff can view facilities and inspections. They can open an inspection and edit the findings and the safety checks.
+Staff can view facilities and inspections. They can open an inspection and edit the findings, the safety checks, and the status.
 
 ## What you need
 
