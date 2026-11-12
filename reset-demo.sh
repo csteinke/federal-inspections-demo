@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
 done
 
 script_dir=$(dirname "$0")
-script_dir=$(CDPATH= cd -- "$script_dir" && pwd)
+script_dir=$(CDPATH='' cd -- "$script_dir" && pwd)
 cd "$script_dir" || {
   printf '%s\n' "Could not open the script folder." >&2
   exit 1
