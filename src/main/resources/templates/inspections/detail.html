@@ -18,6 +18,7 @@
   <h1 th:text="${#temporals.format(inspection.inspectionDate, 'MMMM d, yyyy')}">September 2, 2026</h1>
   <p class="meta"><strong th:text="#{facility.column.name}">Name</strong> <span th:text="${inspection.facility.name}">Facility</span></p>
   <p class="meta"><strong th:text="#{inspection.inspector}">Inspector</strong> <span th:text="${inspection.inspector.name}">Avery Quinn</span></p>
+  <p class="meta"><strong th:text="#{inspection.status}">Status</strong> <span th:text="#{|inspection.status.${inspection.status}|}">Scheduled</span></p>
   <h2 th:text="#{inspection.findings}">Findings</h2>
   <p class="findings" th:if="${!#strings.isEmpty(inspection.findings)}" th:text="${inspection.findings}">Findings</p>
   <p th:if="${#strings.isEmpty(inspection.findings)}" th:text="#{inspection.findings.empty}">No findings recorded.</p>
