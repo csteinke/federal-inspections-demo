@@ -7,6 +7,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.samples.inspection.inspection.InspectionRepository;
 import org.springframework.samples.inspection.model.Inspection;
+import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.samples.inspection.model.SafetyCheck;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,6 +98,80 @@ class InspectionWebTests {
 		Inspection saved = this.inspections.findById(2).orElseThrow();
 		assertThat(saved.getFindings()).isEqualTo("Fire exits are now clear.");
 		assertThat(saved.allChecksDone()).isTrue();
+		assertThat(saved.getStatus()).isEqualTo(InspectionStatus.SCHEDULED);
+	}
+
+	@Test
+	void pagesShowTheInspectionStatus() throws Exception {
+		this.mockMvc.perform(get("/facilities/1"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("Completed")))
+			.andExpect(content().string(containsString("Scheduled")));
+
+		this.mockMvc.perform(get("/inspections/4"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("Cancelled")));
+	}
+
+	@Test
+	void openCheckBlocksCompletedStatus() throws Exception {
+		Inspection inspection = this.inspections.findById(2).orElseThrow();
+		MultiValueMap<String, String> form = this.formFor(inspection);
+		form.set("status", InspectionStatus.COMPLETED.name());
+		form.set("findings", "This text must not be saved.");
+
+		this.mockMvc.perform(post("/inspections/2/edit").params(form))
+			.andExpect(status().isOk())
+			.andExpect(content()
+				.string(containsString("Complete each required safety check before you complete this inspection.")));
+
+		Inspection stored = this.inspections.findById(2).orElseThrow();
+		assertThat(stored.getStatus()).isEqualTo(InspectionStatus.SCHEDULED);
+		assertThat(stored.getFindings()).isEmpty();
+		assertThat(stored.getSafetyChecks()).anyMatch(check -> check.getName().equals("Fire exits") && !check.isDone());
+	}
+
+	@Test
+	void completedStatusSavesWhenEveryCheckIsDone() throws Exception {
+		Inspection inspection = this.inspections.findById(2).orElseThrow();
+		MultiValueMap<String, String> form = this.formFor(inspection);
+		form.set("status", InspectionStatus.COMPLETED.name());
+		for (int index = 0; index < inspection.getSafetyChecks().size(); index++) {
+			form.set("checks[" + index + "].done", "true");
+		}
+
+		this.mockMvc.perform(post("/inspections/2/edit").params(form))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/inspections/2"));
+
+		Inspection saved = this.inspections.findById(2).orElseThrow();
+		assertThat(saved.getStatus()).isEqualTo(InspectionStatus.COMPLETED);
+		assertThat(saved.allChecksDone()).isTrue();
+
+		this.mockMvc.perform(get("/inspections/2"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("Completed")));
+	}
+
+	@Test
+	void cancelledInspectionCannotBeCompleted() throws Exception {
+		Inspection inspection = this.inspections.findById(4).orElseThrow();
+		MultiValueMap<String, String> form = this.formFor(inspection);
+		form.set("status", InspectionStatus.COMPLETED.name());
+		form.set("findings", "This text must not be saved.");
+		for (int index = 0; index < inspection.getSafetyChecks().size(); index++) {
+			form.set("checks[" + index + "].done", "true");
+		}
+
+		this.mockMvc.perform(post("/inspections/4/edit").params(form))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("A cancelled inspection cannot be completed.")));
+
+		Inspection stored = this.inspections.findById(4).orElseThrow();
+		assertThat(stored.getStatus()).isEqualTo(InspectionStatus.CANCELLED);
+		assertThat(stored.getFindings()).isEqualTo("Depot visit ended early.");
+		assertThat(stored.getSafetyChecks())
+			.anyMatch(check -> check.getName().equals("Hazardous storage") && !check.isDone());
 	}
 
 	@Test
@@ -121,6 +196,7 @@ class InspectionWebTests {
 		form.add("inspectionDate", inspection.getInspectionDate().toString());
 		form.add("findings", inspection.getFindings());
 		form.add("inspectorId", inspection.getInspector().getId().toString());
+		form.add("status", inspection.getStatus().name());
 		int index = 0;
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			form.add("checks[" + index + "].id", check.getId().toString());
