@@ -1,5 +1,4 @@
 -- Sample schema for the facility inspection demo.
--- This version has no inspection status.
 
 DROP TABLE IF EXISTS safety_checks;
 DROP TABLE IF EXISTS inspections;
@@ -23,7 +22,8 @@ CREATE TABLE inspections (
   facility_id     INTEGER      NOT NULL,
   inspector_id    INTEGER      NOT NULL,
   inspection_date DATE         NOT NULL,
-  findings        VARCHAR(2000) NOT NULL
+  findings        VARCHAR(2000) NOT NULL,
+  status          VARCHAR(20)  NOT NULL
 );
 ALTER TABLE inspections ADD CONSTRAINT fk_inspections_facility FOREIGN KEY (facility_id) REFERENCES facilities (id);
 ALTER TABLE inspections ADD CONSTRAINT fk_inspections_inspector FOREIGN KEY (inspector_id) REFERENCES inspectors (id);

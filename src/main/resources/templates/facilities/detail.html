@@ -23,6 +23,7 @@
     <tr>
       <th th:text="#{inspection.column.date}">Date</th>
       <th th:text="#{inspection.column.inspector}">Inspector</th>
+      <th th:text="#{inspection.status}">Status</th>
       <th th:text="#{inspection.column.findings}">Findings</th>
       <th th:text="#{inspection.column.action}">Action</th>
     </tr>
@@ -31,6 +32,7 @@
     <tr th:each="item : ${inspections}">
       <td th:text="${#temporals.format(item.inspectionDate, 'MMMM d, yyyy')}">September 2, 2026</td>
       <td th:text="${item.inspector.name}">Avery Quinn</td>
+      <td th:text="#{|inspection.status.${item.status}|}">Scheduled</td>
       <td>
         <span th:if="${!#strings.isEmpty(item.findings)}" th:text="${item.findings}">Findings</span>
         <span th:if="${#strings.isEmpty(item.findings)}" th:text="#{inspection.findings.empty}">No findings recorded.</span>

@@ -7,8 +7,8 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
-import org.springframework.samples.inspection.model.ChkGate;
 import org.springframework.samples.inspection.model.Inspection;
+import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.samples.inspection.model.Inspector;
 import org.springframework.samples.inspection.model.SafetyCheck;
 import org.springframework.stereotype.Service;
@@ -38,15 +38,22 @@ public class InspectionService {
 	}
 
 	@Transactional
-	public void update(Integer id, InspectionForm form) {
+	public Optional<String> update(Integer id, InspectionForm form) {
 		Inspection inspection = this.inspections.findById(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+		if (form.getStatus() == InspectionStatus.COMPLETED && inspection.getStatus() == InspectionStatus.CANCELLED) {
+			return Optional.of("validation.status.cancelled");
+		}
+		if (form.getStatus() == InspectionStatus.COMPLETED && !this.requiredChecksDone(inspection, form)) {
+			return Optional.of("validation.status.checks");
+		}
 		Inspector inspector = this.inspectors.findById(form.getInspectorId())
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown inspector"));
 		inspection.setInspectionDate(form.getInspectionDate());
 		String findings = (form.getFindings() == null) ? "" : form.getFindings().trim();
 		inspection.setFindings(findings);
 		inspection.setInspector(inspector);
+		inspection.setStatus(form.getStatus());
 		Map<Integer, SafetyCheck> byId = new HashMap<>();
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			byId.put(check.getId(), check);
@@ -57,52 +64,32 @@ public class InspectionService {
 				check.setDone(line.isDone());
 			}
 		}
-		// Score the rows with the same rules as ChkGate.sc.
-		// This call does not stop the save.
-		this.hold(this.ev(inspection.getSafetyChecks(), ChkGate.MODE_REQUIRED));
+		return Optional.empty();
 	}
 
-	private int ev(List<SafetyCheck> rows, int mode) {
-		int count = 0;
-		int open = 0;
-		for (SafetyCheck row : rows) {
-			if (mode == ChkGate.MODE_SKIP) {
-				continue;
-			}
-			else if (mode == ChkGate.MODE_REQUIRED || mode == ChkGate.BIT_NONE || mode == ChkGate.BIT_OK) {
-				count++;
-				if (!row.isDone()) {
-					if (mode == ChkGate.BIT_OPEN) {
-						open++;
-					}
-					else if (mode == ChkGate.MODE_REQUIRED) {
-						open++;
-					}
-					else {
-						open++;
-					}
-				}
-			}
-			else {
-				count++;
-				if (!row.isDone()) {
-					open++;
+	private boolean requiredChecksDone(Inspection inspection, InspectionForm form) {
+		List<SafetyCheck> checks = inspection.getSafetyChecks();
+		if (checks.isEmpty()) {
+			return false;
+		}
+		Map<Integer, Boolean> submitted = new HashMap<>();
+		if (form.getChecks() != null) {
+			for (InspectionForm.CheckLine line : form.getChecks()) {
+				if (line.getId() != null) {
+					submitted.put(line.getId(), line.isDone());
 				}
 			}
 		}
-		if (count == 0) {
-			return ChkGate.BIT_NONE;
+		for (SafetyCheck check : checks) {
+			Boolean done = submitted.get(check.getId());
+			if (done == null) {
+				done = check.isDone();
+			}
+			if (!done) {
+				return false;
+			}
 		}
-		if (open > 0) {
-			return ChkGate.BIT_OPEN;
-		}
-		return ChkGate.BIT_OK;
-	}
-
-	private void hold(int code) {
-		if (code == ChkGate.BIT_OK || code == ChkGate.BIT_OPEN || code == ChkGate.BIT_NONE) {
-			return;
-		}
+		return true;
 	}
 
 }
