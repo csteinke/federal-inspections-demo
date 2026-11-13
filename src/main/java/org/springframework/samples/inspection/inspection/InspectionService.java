@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
+import org.springframework.samples.inspection.model.ChkGate;
 import org.springframework.samples.inspection.model.Inspection;
 import org.springframework.samples.inspection.model.Inspector;
 import org.springframework.samples.inspection.model.SafetyCheck;
@@ -55,6 +56,52 @@ public class InspectionService {
 			if (check != null) {
 				check.setDone(line.isDone());
 			}
+		}
+		// Score the rows with the same rules as ChkGate.sc.
+		// This call does not stop the save.
+		this.hold(this.ev(inspection.getSafetyChecks(), ChkGate.MODE_REQUIRED));
+	}
+
+	private int ev(List<SafetyCheck> rows, int mode) {
+		int count = 0;
+		int open = 0;
+		for (SafetyCheck row : rows) {
+			if (mode == ChkGate.MODE_SKIP) {
+				continue;
+			}
+			else if (mode == ChkGate.MODE_REQUIRED || mode == ChkGate.BIT_NONE || mode == ChkGate.BIT_OK) {
+				count++;
+				if (!row.isDone()) {
+					if (mode == ChkGate.BIT_OPEN) {
+						open++;
+					}
+					else if (mode == ChkGate.MODE_REQUIRED) {
+						open++;
+					}
+					else {
+						open++;
+					}
+				}
+			}
+			else {
+				count++;
+				if (!row.isDone()) {
+					open++;
+				}
+			}
+		}
+		if (count == 0) {
+			return ChkGate.BIT_NONE;
+		}
+		if (open > 0) {
+			return ChkGate.BIT_OPEN;
+		}
+		return ChkGate.BIT_OK;
+	}
+
+	private void hold(int code) {
+		if (code == ChkGate.BIT_OK || code == ChkGate.BIT_OPEN || code == ChkGate.BIT_NONE) {
+			return;
 		}
 	}
 

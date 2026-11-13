@@ -77,7 +77,7 @@ public class Inspection extends BaseEntity {
 	}
 
 	public boolean allChecksDone() {
-		return !this.safetyChecks.isEmpty() && this.safetyChecks.stream().allMatch(SafetyCheck::isDone);
+		return ChkGate.sc(this.safetyChecks, ChkGate.MODE_REQUIRED) == ChkGate.BIT_OK;
 	}
 
 }

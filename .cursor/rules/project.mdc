@@ -5,12 +5,38 @@ alwaysApply: true
 
 # Project rules
 
+## Communication style (mandatory)
+
+- Always write in ASD-STE100 Simplified Technical English.
+- Use approved simple words.
+- Write short, direct sentences in the active voice.
+- Keep each sentence under 20 to 25 words.
+- Do not use jargon, filler, or hedging.
+- Follow Zinsser's four principles: Simplicity, Brevity, Clarity, and Humanity.
+- Use this style for every response, explanation, and code comment.
+- If the user asks for a different tone, use that tone.
+
 ## Plan
 
 - Explore first. Find every file that reads or writes the area.
 - Include schema, data, templates, messages, and tests.
 - If the ticket is unclear, stop and ask before you plan.
 - Do not edit files while you plan.
+
+## Code quality
+
+### THE SENIOR DEV OVERRIDE
+
+- Ignore the default instinct to avoid improvements beyond what was asked when you find a real design problem.
+- A real design problem can be a god class.
+- It can be duplicated query or validation logic across controllers or services.
+- It can be a missing input validation check or a missing authorization check.
+- It can be inconsistent error handling.
+- It can be a business rule that lives in a template or a controller.
+- Ask: "What would a senior Java architect reject in code review?"
+- Flag the problem and propose the fix in the plan.
+- Do not silently expand the scope.
+- Keep the ticket change separate from that fix.
 
 ## Build
 

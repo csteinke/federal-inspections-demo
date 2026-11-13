@@ -26,6 +26,35 @@ On macOS or Linux, run `./mvnw spring-javaformat:apply`.
 
 On Windows, run `.\mvnw.cmd spring-javaformat:apply`.
 
+## Demo run of show
+
+Use this order. Work in Cursor on Windows. Run the commands in PowerShell from this folder.
+
+1. Explain the old check. Ask Cursor this question:
+
+```
+Explain @src/main/java/org/springframework/samples/inspection/model/ChkGate.java#sc in plain words. What would break if I change it?
+```
+
+2. Plan INS-142 in Plan mode. Ask Cursor to plan `docs/tickets/INS-142.md`. Do not edit files in this step.
+3. Build the ticket on your machine. The agent works on a feature branch. Then run:
+
+```
+.\mvnw.cmd spring-javaformat:apply
+.\mvnw.cmd test
+```
+
+4. Check the branch against the ticket. Ask the verifier to compare the branch with `docs/tickets/INS-142.md`.
+5. A push to main is blocked. Ask the agent to push the branch to main. The project hook blocks that push.
+6. Open a pull request. Ask the agent to push the feature branch and open a pull request against `main`.
+7. Bugbot reviews the pull request. The review rules are in `.cursor/BUGBOT.md`.
+8. Merge the pull request on GitHub.
+9. Put the folder back on the start tag:
+
+```
+.\reset-demo.cmd
+```
+
 ## Reset the demo
 
 Run this before you rehearse again. It puts this folder back on the `demo-start` tag. That tag is the clean app, before a rehearsal adds the ticket work.
@@ -53,6 +82,7 @@ If you change the demo setup on purpose, move the tag with `git tag -f demo-star
 
 - `AGENTS.md`
 - `.cursor/rules/project.mdc`
+- `.cursor/BUGBOT.md`
 - `.cursor/agents/verifier.md`
 - `.cursor/hooks.json`
 - `.cursor/hooks/block-main-push.sh`
