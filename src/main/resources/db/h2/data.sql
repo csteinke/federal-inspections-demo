@@ -13,19 +13,19 @@ INSERT INTO inspectors (id, name) VALUES
   (3, 'Cameron Ortiz'),
   (4, 'Drew Shah');
 
-INSERT INTO inspections (id, facility_id, inspector_id, inspection_date, findings) VALUES
-  (1,  1, 1, '2026-09-02', 'Records room is clear. Aisles are open.'),
-  (2,  1, 2, '2026-11-20', ''),
-  (3,  1, 3, '2026-06-14', 'Training files are stored off the floor.'),
-  (4,  2, 1, '2026-08-19', 'Depot visit ended early.'),
-  (5,  2, 4, '2026-12-01', 'Winter visit is booked.'),
-  (6,  3, 2, '2026-04-03', 'Hall exits and panels are in order.'),
-  (7,  3, 3, '2026-10-28', 'Panel label is missing.'),
-  (8,  4, 4, '2026-07-22', 'Yard is tidy. Storage is labeled.'),
-  (9,  4, 1, '2026-11-18', 'Visit is not started.'),
-  (10, 5, 2, '2026-05-09', 'Shop floor is clear.'),
-  (11, 5, 3, '2026-03-16', 'Old paint is still in the side room.'),
-  (12, 5, 4, '2026-12-15', 'Year-end visit is booked.');
+INSERT INTO inspections (id, facility_id, inspector_id, inspection_date, findings, status) VALUES
+  (1,  1, 1, '2026-09-02', 'Records room is clear. Aisles are open.', 'COMPLETED'),
+  (2,  1, 2, '2026-11-20', '', 'SCHEDULED'),
+  (3,  1, 3, '2026-06-14', 'Training files are stored off the floor.', 'COMPLETED'),
+  (4,  2, 1, '2026-08-19', 'Depot visit ended early.', 'CANCELLED'),
+  (5,  2, 4, '2026-12-01', 'Winter visit is booked.', 'SCHEDULED'),
+  (6,  3, 2, '2026-04-03', 'Hall exits and panels are in order.', 'COMPLETED'),
+  (7,  3, 3, '2026-10-28', 'Panel label is missing.', 'SCHEDULED'),
+  (8,  4, 4, '2026-07-22', 'Yard is tidy. Storage is labeled.', 'COMPLETED'),
+  (9,  4, 1, '2026-11-18', 'Visit is not started.', 'SCHEDULED'),
+  (10, 5, 2, '2026-05-09', 'Shop floor is clear.', 'COMPLETED'),
+  (11, 5, 3, '2026-03-16', 'Old paint is still in the side room.', 'SCHEDULED'),
+  (12, 5, 4, '2026-12-15', 'Year-end visit is booked.', 'SCHEDULED');
 
 -- Each inspection has three required safety checks.
 -- A FALSE value means the check is missing.

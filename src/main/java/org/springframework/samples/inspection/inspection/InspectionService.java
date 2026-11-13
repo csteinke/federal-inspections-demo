@@ -1,5 +1,6 @@
 package org.springframework.samples.inspection.inspection;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.samples.inspection.inspector.InspectorRepository;
 import org.springframework.samples.inspection.model.ChkGate;
 import org.springframework.samples.inspection.model.Inspection;
+import org.springframework.samples.inspection.model.InspectionStatus;
 import org.springframework.samples.inspection.model.Inspector;
 import org.springframework.samples.inspection.model.SafetyCheck;
 import org.springframework.stereotype.Service;
@@ -38,15 +40,24 @@ public class InspectionService {
 	}
 
 	@Transactional
-	public void update(Integer id, InspectionForm form) {
+	public Optional<String> update(Integer id, InspectionForm form) {
 		Inspection inspection = this.inspections.findById(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
 		Inspector inspector = this.inspectors.findById(form.getInspectorId())
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown inspector"));
+		if (form.getStatus() == InspectionStatus.COMPLETED) {
+			if (inspection.getStatus() == InspectionStatus.CANCELLED) {
+				return Optional.of("inspection.error.cancelled");
+			}
+			if (!this.mergedChecksDone(inspection, form)) {
+				return Optional.of("inspection.error.openChecks");
+			}
+		}
 		inspection.setInspectionDate(form.getInspectionDate());
 		String findings = (form.getFindings() == null) ? "" : form.getFindings().trim();
 		inspection.setFindings(findings);
 		inspection.setInspector(inspector);
+		inspection.setStatus(form.getStatus());
 		Map<Integer, SafetyCheck> byId = new HashMap<>();
 		for (SafetyCheck check : inspection.getSafetyChecks()) {
 			byId.put(check.getId(), check);
@@ -60,6 +71,30 @@ public class InspectionService {
 		// Score the rows with the same rules as ChkGate.sc.
 		// This call does not stop the save.
 		this.hold(this.ev(inspection.getSafetyChecks(), ChkGate.MODE_REQUIRED));
+		return Optional.empty();
+	}
+
+	// Use the posted check when the form sends that row.
+	// Keep the stored value when the form omits the row.
+	private boolean mergedChecksDone(Inspection inspection, InspectionForm form) {
+		Map<Integer, Boolean> posted = new HashMap<>();
+		for (InspectionForm.CheckLine line : form.getChecks()) {
+			if (line.getId() != null) {
+				posted.put(line.getId(), line.isDone());
+			}
+		}
+		List<SafetyCheck> merged = new ArrayList<>();
+		for (SafetyCheck stored : inspection.getSafetyChecks()) {
+			SafetyCheck row = new SafetyCheck();
+			if (posted.containsKey(stored.getId())) {
+				row.setDone(posted.get(stored.getId()));
+			}
+			else {
+				row.setDone(stored.isDone());
+			}
+			merged.add(row);
+		}
+		return ChkGate.sc(merged, ChkGate.MODE_REQUIRED) == ChkGate.BIT_OK;
 	}
 
 	private int ev(List<SafetyCheck> rows, int mode) {
